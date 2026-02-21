@@ -70,7 +70,7 @@ final class Logger extends AbstractLogger {
 	 * @param string $message Log message.
 	 * @param array  $context Additional data.
 	 */
-	public function log( $level, $message, array $context = [] ) {
+	public function log( $level, string|\Stringable $message, array $context = [] ): void {
 		if ( ! $this->handle_level( $level ) ) {
 			return;
 		}
@@ -164,7 +164,7 @@ final class Logger extends AbstractLogger {
 	protected function to_string( $value ): string {
 		if ( is_wp_error( $value ) ) {
 			$value = $value->get_error_message();
-		} elseif ( is_object( $value ) && method_exists( '__toString', $value ) ) {
+		} elseif ( is_object( $value ) && method_exists( $value, '__toString' ) ) {
 			$value = (string) $value;
 		} elseif ( ! is_scalar( $value ) ) {
 			$value = wp_json_encode( $value, \JSON_UNESCAPED_SLASHES );
