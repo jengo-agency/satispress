@@ -39,5 +39,7 @@ class Deactivation extends AbstractHookProvider {
 	public function deactivate() {
 		delete_option( 'rewrite_rules' );
 		delete_option( 'satispress_flush_rewrite_rules' );
+
+		wp_clear_scheduled_hook( 'satispress_purge_releases' );
 	}
 }

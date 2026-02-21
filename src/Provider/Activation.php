@@ -42,5 +42,9 @@ class Activation extends AbstractHookProvider {
 	 */
 	public function activate() {
 		update_option( 'satispress_flush_rewrite_rules', 'yes' );
+
+		if ( ! wp_next_scheduled( 'satispress_purge_releases' ) ) {
+			wp_schedule_event( time(), 'daily', 'satispress_purge_releases' );
+		}
 	}
 }

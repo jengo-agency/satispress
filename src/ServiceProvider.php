@@ -102,6 +102,13 @@ class ServiceProvider implements ServiceProviderInterface {
 			return new Provider\Capabilities();
 		};
 
+		$container['hooks.cron'] = function ( $container ) {
+			return new Provider\Cron(
+				$container['release.manager'],
+				$container['repository.installed']
+			);
+		};
+
 		$container['hooks.custom_vendor'] = function () {
 			return new Provider\CustomVendor();
 		};

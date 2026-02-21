@@ -245,6 +245,14 @@ class Settings extends AbstractHookProvider {
 			'satispress',
 			'default'
 		);
+
+		add_settings_field(
+			'enable_purge',
+			esc_html__( 'Enable Purge', 'satispress' ),
+			[ $this, 'render_field_enable_purge' ],
+			'satispress',
+			'default'
+		);
 	}
 
 	/**
@@ -259,6 +267,8 @@ class Settings extends AbstractHookProvider {
 		if ( ! empty( $value['vendor'] ) ) {
 			$value['vendor'] = preg_replace( '/[^a-z0-9_\-\.]+/i', '', $value['vendor'] );
 		}
+
+		$value['enable_purge'] = isset( $value['enable_purge'] ) && 'yes' === $value['enable_purge'] ? 'yes' : 'no';
 
 		return (array) apply_filters( 'satispress_sanitize_settings', $value );
 	}
@@ -365,7 +375,7 @@ class Settings extends AbstractHookProvider {
 			add_query_arg( 'satispress_action', 'purge_packages_cache', menu_page_url( 'satispress', false ) ),
 			'satispress_purge_packages_cache'
 		);
-		
+
 		global $wpdb;
 		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%'" );
 		?>
@@ -375,6 +385,26 @@ class Settings extends AbstractHookProvider {
 		<p class="description">
 			<?php esc_html_e( 'Clears the cached file checksums.', 'satispress' ); ?><br>
 			<?php printf( esc_html__( 'Cached checksums: %d', 'satispress' ), $count ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Display a field for enabling the purge feature.
+	 *
+	 * @since 2.1.0
+	 */
+	public function render_field_enable_purge() {
+		$value = $this->get_setting( 'enable_purge', 'no' );
+		?>
+		<p>
+			<label>
+				<input type="checkbox" name="satispress[enable_purge]" value="yes" <?php checked( $value, 'yes' ); ?>>
+				<?php esc_html_e( 'Enable automatic purging of old releases', 'satispress' ); ?>
+			</label>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Keeps only the 3 last versions, 3 last bugfix versions, 3 last minor versions, and 3 major versions.', 'satispress' ); ?>
 		</p>
 		<?php
 	}

@@ -113,6 +113,36 @@ class ReleaseManager {
 	 * @param Release $release   Release instance.
 	 * @return string
 	 */
+	/**
+	 * Delete a release.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param Release $release Release instance.
+	 * @return bool
+	 */
+	public function delete( Release $release ): bool {
+		if ( ! $this->exists( $release ) ) {
+			return false;
+		}
+
+		$deleted = $this->storage->delete( $release->get_file_path() );
+		if ( $deleted ) {
+			do_action( 'satispress_release_deleted', $release );
+		}
+
+		return $deleted;
+	}
+
+	/**
+	 * Retrieve a checksum for a release.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @param string  $algorithm Algorithm.
+	 * @param Release $release   Release instance.
+	 * @return string
+	 */
 	public function checksum( string $algorithm, Release $release ): string {
 		return $this->storage->checksum( $algorithm, $release->get_file_path() );
 	}
