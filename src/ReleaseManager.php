@@ -99,6 +99,8 @@ class ReleaseManager {
 			throw FileOperationFailed::unableToMoveReleaseArtifactToStorage( $filename, $release->get_file_path() );
 		}
 
+		do_action( 'satispress_release_archived', $release );
+
 		return $release;
 	}
 

@@ -87,6 +87,20 @@ class PackageArchiver extends AbstractHookProvider {
 		add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'archive_updates' ], 9999 );
 		add_filter( 'pre_set_site_transient_update_themes', [ $this, 'archive_updates' ], 9999 );
 		add_filter( 'upgrader_post_install', [ $this, 'archive_on_upgrade' ], 10, 3 );
+
+		add_action( 'satispress_release_archived', [ $this, 'invalidate_cache' ] );
+		add_action( 'update_option_satispress_plugins', [ $this, 'invalidate_cache' ] );
+		add_action( 'update_option_satispress_themes', [ $this, 'invalidate_cache' ] );
+	}
+
+	/**
+	 * Invalidate the packages.json cache.
+	 *
+	 * @since 2.0.2
+	 */
+	public function invalidate_cache() {
+		$version = (int) get_option( 'satispress_packages_cache_version', '1' );
+		update_option( 'satispress_packages_cache_version', (string) ( $version + 1 ) );
 	}
 
 	/**

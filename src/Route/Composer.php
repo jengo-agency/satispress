@@ -67,10 +67,35 @@ class Composer implements Route {
 			throw HttpException::forForbiddenResource();
 		}
 
+		$user_id       = get_current_user_id();
+		$cache_version = get_option( 'satispress_packages_cache_version', '1' );
+		$cache_key     = 'satispress_packages_' . $user_id . '_' . $cache_version;
+		$cached_data   = get_transient( $cache_key );
+
+		if ( false === $cached_data ) {
+			$cached_data = $this->transformer->transform( $this->repository );
+			set_transient( $cache_key, $cached_data, 12 * HOUR_IN_SECONDS );
+		}
+
+		$etag    = md5( wp_json_encode( $cached_data ) );
+		$headers = [
+			'Content-Type' => 'application/json; charset=' . get_option( 'blog_charset' ),
+			'ETag'         => '"' . $etag . '"',
+		];
+
+		$if_none_match = $request->get_header( 'if_none_match' );
+		if ( $if_none_match && trim( $if_none_match, '"' ) === $etag ) {
+			return new Response(
+				new \SatisPress\HTTP\ResponseBody\NullBody(),
+				304,
+				$headers
+			);
+		}
+
 		return new Response(
-			new JsonBody( $this->transformer->transform( $this->repository ) ),
+			new JsonBody( $cached_data ),
 			HTTP::OK,
-			[ 'Content-Type' => 'application/json; charset=' . get_option( 'blog_charset' ) ]
+			$headers
 		);
 	}
 }
