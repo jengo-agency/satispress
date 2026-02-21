@@ -58,6 +58,37 @@ class Settings extends AbstractHookProvider {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'add_sections' ] );
 		add_action( 'admin_init', [ $this, 'add_settings' ] );
+		add_action( 'admin_init', [ $this, 'handle_cache_purge' ] );
+	}
+
+	/**
+	 * Handle cache purge request.
+	 *
+	 * @since 2.0.2
+	 */
+	public function handle_cache_purge() {
+		if ( ! isset( $_GET['satispress_action'] ) || 'purge_cache' !== $_GET['satispress_action'] ) {
+			return;
+		}
+
+		if ( ! current_user_can( Capabilities::MANAGE_OPTIONS ) ) {
+			return;
+		}
+
+		check_admin_referer( 'satispress_purge_cache' );
+
+		// Purge packages.json cache
+		$version = (int) get_option( 'satispress_packages_cache_version', '1' );
+		update_option( 'satispress_packages_cache_version', (string) ( $version + 1 ) );
+
+		// Purge checksum transients
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%' OR option_name LIKE '_transient_timeout_satispress_hash_%'" );
+
+		add_settings_error( 'satispress', 'cache_purged', esc_html__( 'Cache purged successfully.', 'satispress' ), 'success' );
+
+		wp_safe_redirect( remove_query_arg( [ 'satispress_action', '_wpnonce' ] ) );
+		exit;
 	}
 
 	/**
@@ -187,6 +218,14 @@ class Settings extends AbstractHookProvider {
 			'satispress',
 			'default'
 		);
+
+		add_settings_field(
+			'cache',
+			esc_html__( 'Cache', 'satispress' ),
+			[ $this, 'render_field_cache' ],
+			'satispress',
+			'default'
+		);
 	}
 
 	/**
@@ -249,6 +288,26 @@ class Settings extends AbstractHookProvider {
 		<p>
 			<input type="text" name="satispress[vendor]" id="satispress-vendor" value="<?php echo esc_attr( $value ); ?>"><br />
 			<span class="description">Default is <code>satispress</code></span>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Display a field for cache management.
+	 *
+	 * @since 2.0.2
+	 */
+	public function render_field_cache() {
+		$purge_url = wp_nonce_url(
+			add_query_arg( 'satispress_action', 'purge_cache', menu_page_url( 'satispress', false ) ),
+			'satispress_purge_cache'
+		);
+		?>
+		<p>
+			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge Cache', 'satispress' ); ?></a>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Clears the cached packages.json and file checksums.', 'satispress' ); ?>
 		</p>
 		<?php
 	}

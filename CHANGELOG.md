@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+* Implemented Cache system and 304 response for unchanged packages.json
+* Implemented Cache system for package building (transients)
+* Updated code for PHP8+
+
 ## [2.0.1] - 2025-12-04
 
 * Fixed the search functionality in the package selector sidebar. See [#223].

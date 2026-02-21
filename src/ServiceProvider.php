@@ -170,6 +170,10 @@ class ServiceProvider implements ServiceProviderInterface {
 				$request->set_header( 'PHP_AUTH_PW', $_SERVER['PHP_AUTH_PW'] ?? null );
 			}
 
+			if ( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) {
+				$request->set_header( 'If-None-Match', wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) );
+			}
+
 			return $request;
 		};
 
