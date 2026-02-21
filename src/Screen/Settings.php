@@ -67,7 +67,12 @@ class Settings extends AbstractHookProvider {
 	 * @since 2.0.2
 	 */
 	public function handle_cache_purge() {
-		if ( ! isset( $_GET['satispress_action'] ) || 'purge_cache' !== $_GET['satispress_action'] ) {
+		if ( ! isset( $_GET['satispress_action'] ) ) {
+			return;
+		}
+
+		$action = $_GET['satispress_action'];
+		if ( ! in_array( $action, [ 'purge_packages_json', 'purge_packages_cache' ], true ) ) {
 			return;
 		}
 
@@ -75,17 +80,19 @@ class Settings extends AbstractHookProvider {
 			return;
 		}
 
-		check_admin_referer( 'satispress_purge_cache' );
+		check_admin_referer( 'satispress_' . $action );
 
-		// Purge packages.json cache
-		$version = (int) get_option( 'satispress_packages_cache_version', '1' );
-		update_option( 'satispress_packages_cache_version', (string) ( $version + 1 ) );
-
-		// Purge checksum transients
-		global $wpdb;
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%' OR option_name LIKE '_transient_timeout_satispress_hash_%'" );
-
-		add_settings_error( 'satispress', 'cache_purged', esc_html__( 'Cache purged successfully.', 'satispress' ), 'success' );
+		if ( 'purge_packages_json' === $action ) {
+			// Purge packages.json cache
+			$version = (int) get_option( 'satispress_packages_cache_version', '1' );
+			update_option( 'satispress_packages_cache_version', (string) ( $version + 1 ) );
+			add_settings_error( 'satispress', 'packages_json_purged', esc_html__( 'packages.json cache purged successfully.', 'satispress' ), 'success' );
+		} elseif ( 'purge_packages_cache' === $action ) {
+			// Purge checksum transients
+			global $wpdb;
+			$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%' OR option_name LIKE '_transient_timeout_satispress_hash_%'" );
+			add_settings_error( 'satispress', 'packages_cache_purged', esc_html__( 'Packages cache purged successfully.', 'satispress' ), 'success' );
+		}
 
 		wp_safe_redirect( remove_query_arg( [ 'satispress_action', '_wpnonce' ] ) );
 		exit;
@@ -220,9 +227,17 @@ class Settings extends AbstractHookProvider {
 		);
 
 		add_settings_field(
-			'cache',
-			esc_html__( 'Cache', 'satispress' ),
-			[ $this, 'render_field_cache' ],
+			'packages_json',
+			esc_html__( 'packages.json', 'satispress' ),
+			[ $this, 'render_field_packages_json' ],
+			'satispress',
+			'default'
+		);
+
+		add_settings_field(
+			'packages_cache',
+			esc_html__( 'Packages Cache', 'satispress' ),
+			[ $this, 'render_field_packages_cache' ],
 			'satispress',
 			'default'
 		);
@@ -293,21 +308,49 @@ class Settings extends AbstractHookProvider {
 	}
 
 	/**
-	 * Display a field for cache management.
+	 * Display a field for packages.json cache management.
 	 *
 	 * @since 2.0.2
 	 */
-	public function render_field_cache() {
+	public function render_field_packages_json() {
 		$purge_url = wp_nonce_url(
-			add_query_arg( 'satispress_action', 'purge_cache', menu_page_url( 'satispress', false ) ),
-			'satispress_purge_cache'
+			add_query_arg( 'satispress_action', 'purge_packages_json', menu_page_url( 'satispress', false ) ),
+			'satispress_purge_packages_json'
 		);
+		$version = (int) get_option( 'satispress_packages_cache_version', '1' );
+		$packages_url = get_packages_permalink();
 		?>
 		<p>
-			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge Cache', 'satispress' ); ?></a>
+			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge packages.json Cache', 'satispress' ); ?></a>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'Clears the cached packages.json and file checksums.', 'satispress' ); ?>
+			<?php esc_html_e( 'Clears the cached packages.json.', 'satispress' ); ?><br>
+			<?php printf( esc_html__( 'Current cache version: %d', 'satispress' ), $version ); ?><br>
+			<a href="<?php echo esc_url( $packages_url ); ?>" target="_blank"><?php esc_html_e( 'View packages.json', 'satispress' ); ?></a>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Display a field for packages cache management.
+	 *
+	 * @since 2.0.2
+	 */
+	public function render_field_packages_cache() {
+		$purge_url = wp_nonce_url(
+			add_query_arg( 'satispress_action', 'purge_packages_cache', menu_page_url( 'satispress', false ) ),
+			'satispress_purge_packages_cache'
+		);
+		
+		global $wpdb;
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%'" );
+		?>
+		<p>
+			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge Packages Cache', 'satispress' ); ?></a>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Clears the cached file checksums.', 'satispress' ); ?><br>
+			<?php printf( esc_html__( 'Cached checksums: %d', 'satispress' ), $count ); ?>
 		</p>
 		<?php
 	}
