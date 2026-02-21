@@ -24,12 +24,6 @@ use SatisPress\PackageType\ThemeBuilder;
  * @since 0.3.0
  */
 final class PackageFactory {
-	/**
-	 * Release manager.
-	 *
-	 * @var ReleaseManager
-	 */
-	private $release_manager;
 
 	/**
 	 * Constructor.
@@ -38,7 +32,7 @@ final class PackageFactory {
 	 *
 	 * @param ReleaseManager $release_manager Release manager.
 	 */
-	public function __construct( ReleaseManager $release_manager ) {
+	public function __construct( private readonly ReleaseManager $release_manager ) {
 		$this->release_manager = $release_manager;
 	}
 
@@ -51,12 +45,11 @@ final class PackageFactory {
 	 * @return PluginBuilder|ThemeBuilder|PackageBuilder Package builder instance.
 	 */
 	public function create( string $package_type ): PackageBuilder {
-		switch ( $package_type ) {
-			case 'plugin':
-				return new PluginBuilder( new Plugin(), $this->release_manager );
-			case 'theme':
-				return new ThemeBuilder( new Theme(), $this->release_manager );
-		}
+		return match ( $package_type ) {
+			'plugin' => new PluginBuilder( new Plugin(), $this->release_manager ),
+			'theme' => new ThemeBuilder( new Theme(), $this->release_manager ),
+			default => new PackageBuilder( new BasePackage(), $this->release_manager ),
+		};
 
 		return new PackageBuilder( new BasePackage(), $this->release_manager );
 	}

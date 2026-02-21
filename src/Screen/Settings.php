@@ -132,6 +132,26 @@ class Settings extends AbstractHookProvider {
 	}
 
 	/**
+	 * Add settings page link to the plugins page.
+	 *
+	 * @param array $actions An array of plugin action links.
+	 * @return array
+	 */
+	public function add_settings_link( array $actions ): array {
+		array_unshift(
+			$actions,
+			sprintf(
+				'<a href="%s" aria-label="%s">%s</a>',
+				menu_page_url( 'satispress', false ),
+				esc_attr__( 'Settings for SatisPress', 'satispress' ),
+				esc_html__( 'Settings', 'satispress' )
+			),
+		);
+
+		return $actions;
+	}
+
+	/**
 	 * Register settings.
 	 *
 	 * @since 0.2.0

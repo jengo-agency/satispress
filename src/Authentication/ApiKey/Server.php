@@ -131,7 +131,7 @@ class Server implements ServerInterface {
 	 * @param mixed $user WordPress user instance.
 	 * @return bool
 	 */
-	protected function validate_user( $user ): bool {
+	protected function validate_user( mixed $user ): bool {
 		return ! empty( $user ) && ! is_wp_error( $user ) && $user->exists();
 	}
 }

@@ -174,9 +174,7 @@ class PackagesController extends WP_REST_Controller {
 		$items = [];
 
 		$repository = $this->repository->with_filter(
-			function ( $package ) use ( $request ) {
-				return in_array( $package->get_type(), $request['type'], true );
-			}
+			fn( $package ) => in_array( $package->get_type(), $request['type'], true )
 		);
 
 		foreach ( $repository->all() as $slug => $package ) {
@@ -408,7 +406,7 @@ class PackagesController extends WP_REST_Controller {
 					'version' => $version,
 				];
 			// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
-			} catch ( FileNotFound $e ) {
+			} catch ( FileNotFound ) {
 				// Skip if the release artifact is missing.
 			}
 		}

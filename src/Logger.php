@@ -109,7 +109,7 @@ final class Logger extends AbstractLogger {
 		foreach ( $context as $key => $value ) {
 			$placeholder = '{' . $key . '}';
 
-			if ( false === strpos( $message, $placeholder ) ) {
+			if (! str_contains( $message, $placeholder ) ) {
 				continue;
 			}
 
@@ -161,7 +161,7 @@ final class Logger extends AbstractLogger {
 	 * @param mixed $value Message.
 	 * @return string
 	 */
-	protected function to_string( $value ): string {
+	protected function to_string( mixed $value ): string {
 		if ( is_wp_error( $value ) ) {
 			$value = $value->get_error_message();
 		} elseif ( is_object( $value ) && method_exists( $value, '__toString' ) ) {

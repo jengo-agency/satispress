@@ -166,7 +166,7 @@ class Archiver {
 		foreach ( $maybe_ignored_files as $file ) {
 			$file = trim( $file );
 
-			if ( ! $file || 0 === strpos( $file, '#' ) ) {
+		if ( ! $file || str_starts_with( $file, '#' ) ) {
 				continue;
 			}
 

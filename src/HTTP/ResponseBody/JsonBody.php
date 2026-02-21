@@ -17,12 +17,6 @@ namespace SatisPress\HTTP\ResponseBody;
  * @since 0.3.0
  */
 class JsonBody implements ResponseBody {
-	/**
-	 * Message data.
-	 *
-	 * @var mixed
-	 */
-	protected $data;
 
 	/**
 	 * Create a JSON response body.
@@ -31,7 +25,7 @@ class JsonBody implements ResponseBody {
 	 *
 	 * @param mixed $data Response data.
 	 */
-	public function __construct( $data ) {
+	public function __construct( protected mixed $data ) {
 		$this->data = $data;
 	}
 
