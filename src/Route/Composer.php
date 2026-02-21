@@ -84,12 +84,15 @@ class Composer implements Route {
 		];
 
 		$if_none_match = $request->get_header( 'if-none-match' );
-		if ( $if_none_match && trim( $if_none_match, '"' ) === $etag ) {
-			return new Response(
-				new \SatisPress\HTTP\ResponseBody\NullBody(),
-				304,
-				$headers
-			);
+		if ( $if_none_match ) {
+			$if_none_match = preg_replace( '/^W\//', '', $if_none_match );
+			if ( trim( $if_none_match, '"' ) === $etag ) {
+				return new Response(
+					new \SatisPress\HTTP\ResponseBody\NullBody(),
+					304,
+					$headers
+				);
+			}
 		}
 
 		return new Response(
