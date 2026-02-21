@@ -81,6 +81,8 @@ class Composer implements Route {
 			set_transient( $time_cache_key, $cached_time, 12 * HOUR_IN_SECONDS );
 		}
 
+		$cached_time = (int) $cached_time;
+
 		$etag          = md5( wp_json_encode( $cached_data ) );
 		$last_modified = gmdate( 'D, d M Y H:i:s', $cached_time ) . ' GMT';
 		$headers       = [

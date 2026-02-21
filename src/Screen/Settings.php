@@ -333,7 +333,7 @@ class Settings extends AbstractHookProvider {
 		$cache_info = [];
 		foreach ( $cache_keys as $key ) {
 			$time = get_transient( $key . '_time' );
-			$cache_info[ $key ] = $time ? wp_date( 'Y-m-d H:i:s', $time ) : 'Unknown';
+			$cache_info[ $key ] = $time ? wp_date( 'Y-m-d H:i:s', (int) $time ) : 'Unknown';
 		}
 		?>
 		<p>
