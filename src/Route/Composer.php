@@ -67,32 +67,50 @@ class Composer implements Route {
 			throw HttpException::forForbiddenResource();
 		}
 
-		$user_id       = get_current_user_id();
-		$cache_version = get_option( 'satispress_packages_cache_version', '1' );
-		$cache_key     = 'satispress_packages_' . $user_id . '_' . $cache_version;
-		$cached_data   = get_transient( $cache_key );
+		$user_id        = get_current_user_id();
+		$cache_version  = get_option( 'satispress_packages_cache_version', '1' );
+		$cache_key      = 'satispress_packages_' . $user_id . '_' . $cache_version;
+		$time_cache_key = $cache_key . '_time';
+		$cached_data    = get_transient( $cache_key );
+		$cached_time    = get_transient( $time_cache_key );
 
-		if ( false === $cached_data ) {
+		if ( false === $cached_data || false === $cached_time ) {
 			$cached_data = $this->transformer->transform( $this->repository );
+			$cached_time = time();
 			set_transient( $cache_key, $cached_data, 12 * HOUR_IN_SECONDS );
+			set_transient( $time_cache_key, $cached_time, 12 * HOUR_IN_SECONDS );
 		}
 
-		$etag    = md5( wp_json_encode( $cached_data ) );
-		$headers = [
-			'Content-Type' => 'application/json; charset=' . get_option( 'blog_charset' ),
-			'ETag'         => '"' . $etag . '"',
+		$etag          = md5( wp_json_encode( $cached_data ) );
+		$last_modified = gmdate( 'D, d M Y H:i:s', $cached_time ) . ' GMT';
+		$headers       = [
+			'Content-Type'  => 'application/json; charset=' . get_option( 'blog_charset' ),
+			'ETag'          => '"' . $etag . '"',
+			'Last-Modified' => $last_modified,
 		];
 
-		$if_none_match = $request->get_header( 'if-none-match' );
+		$if_none_match     = $request->get_header( 'if-none-match' );
+		$if_modified_since = $request->get_header( 'if-modified-since' );
+		$is_not_modified   = false;
+
 		if ( $if_none_match ) {
 			$if_none_match = preg_replace( '/^W\//', '', $if_none_match );
 			if ( trim( $if_none_match, '"' ) === $etag ) {
-				return new Response(
-					new \SatisPress\HTTP\ResponseBody\NullBody(),
-					304,
-					$headers
-				);
+				$is_not_modified = true;
 			}
+		} elseif ( $if_modified_since ) {
+			$if_modified_since_timestamp = strtotime( $if_modified_since );
+			if ( $if_modified_since_timestamp && $if_modified_since_timestamp >= $cached_time ) {
+				$is_not_modified = true;
+			}
+		}
+
+		if ( $is_not_modified ) {
+			return new Response(
+				new \SatisPress\HTTP\ResponseBody\NullBody(),
+				304,
+				$headers
+			);
 		}
 
 		return new Response(

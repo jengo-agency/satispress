@@ -86,6 +86,10 @@ class Settings extends AbstractHookProvider {
 			// Purge packages.json cache
 			$version = (int) get_option( 'satispress_packages_cache_version', '1' );
 			update_option( 'satispress_packages_cache_version', (string) ( $version + 1 ) );
+
+			global $wpdb;
+			$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_packages_%' OR option_name LIKE '_transient_timeout_satispress_packages_%'" );
+
 			add_settings_error( 'satispress', 'packages_json_purged', esc_html__( 'packages.json cache purged successfully.', 'satispress' ), 'success' );
 		} elseif ( 'purge_packages_cache' === $action ) {
 			// Purge checksum transients
@@ -319,6 +323,18 @@ class Settings extends AbstractHookProvider {
 		);
 		$version = (int) get_option( 'satispress_packages_cache_version', '1' );
 		$packages_url = get_packages_permalink();
+
+		global $wpdb;
+		$cache_keys = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_packages_%' AND option_name NOT LIKE '%_time'" );
+		$cache_keys = array_map( function( $key ) {
+			return str_replace( '_transient_', '', $key );
+		}, $cache_keys );
+
+		$cache_info = [];
+		foreach ( $cache_keys as $key ) {
+			$time = get_transient( $key . '_time' );
+			$cache_info[ $key ] = $time ? wp_date( 'Y-m-d H:i:s', $time ) : 'Unknown';
+		}
 		?>
 		<p>
 			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge packages.json Cache', 'satispress' ); ?></a>
@@ -328,6 +344,14 @@ class Settings extends AbstractHookProvider {
 			<?php printf( esc_html__( 'Current cache version: %d', 'satispress' ), $version ); ?><br>
 			<a href="<?php echo esc_url( $packages_url ); ?>" target="_blank"><?php esc_html_e( 'View packages.json', 'satispress' ); ?></a>
 		</p>
+		<?php if ( ! empty( $cache_info ) ) : ?>
+			<p class="description">
+				<strong><?php esc_html_e( 'Active Cache Keys:', 'satispress' ); ?></strong><br>
+				<?php foreach ( $cache_info as $key => $time ) : ?>
+					<code><?php echo esc_html( $key ); ?></code> - <?php echo esc_html( $time ); ?><br>
+				<?php endforeach; ?>
+			</p>
+		<?php endif; ?>
 		<?php
 	}
 
