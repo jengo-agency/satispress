@@ -56,17 +56,7 @@ class Local implements Storage {
 			throw FileNotFound::forInvalidChecksum( $filename );
 		}
 
-		$cache_key = 'satispress_hash_' . md5( $algorithm . $filename . filemtime( $filename ) );
-		$cached_hash = get_transient( $cache_key );
-
-		if ( false !== $cached_hash ) {
-			return $cached_hash;
-		}
-
-		$hash = hash_file( $algorithm, $filename );
-		set_transient( $cache_key, $hash );
-
-		return $hash;
+		return hash_file( $algorithm, $filename );
 	}
 
 	/**
