@@ -14,6 +14,7 @@ namespace SatisPress\REST;
 use SatisPress\Capabilities;
 use SatisPress\Exception\FileNotFound;
 use SatisPress\Package;
+use SatisPress\PackageFactory;
 use SatisPress\PackageType\Plugin;
 use SatisPress\PackageType\Theme;
 use SatisPress\Repository\PackageRepository;
@@ -45,6 +46,14 @@ class PackagesController extends WP_REST_Controller {
 	protected $composer_transformer;
 
 	/**
+	 * Package factory.
+	 *
+	 * @since 3.0.0
+	 * @var PackageFactory
+	 */
+	protected $factory;
+
+	/**
 	 * Installed packages repository.
 	 *
 	 * @var PackageRepository
@@ -68,19 +77,22 @@ class PackagesController extends WP_REST_Controller {
 	 * @param PackageRepository  $repository           Package repository.
 	 * @param PackageRepository  $installed_packages   Installed packages repository.
 	 * @param PackageTransformer $composer_transformer Package transformer.
+	 * @param PackageFactory     $factory              Package factory.
 	 */
 	public function __construct(
 		string $namespace,
 		string $rest_base,
 		PackageRepository $repository,
 		PackageRepository $installed_packages,
-		PackageTransformer $composer_transformer
+		PackageTransformer $composer_transformer,
+		PackageFactory $factory
 	) {
 		$this->namespace            = $namespace;
 		$this->rest_base            = $rest_base;
 		$this->repository           = $repository;
 		$this->installed_packages   = $installed_packages;
 		$this->composer_transformer = $composer_transformer;
+		$this->factory              = $factory;
 	}
 
 	/**
@@ -241,6 +253,9 @@ class PackagesController extends WP_REST_Controller {
 
 			update_option( 'satispress_themes', $themes );
 		}
+
+		// Add cached releases to the package before the response.
+		$package = $this->build_package_with_releases( $package );
 
 		$request->set_param( 'context', 'edit' );
 		$response = $this->prepare_item_for_response( $package, $request );
@@ -412,6 +427,21 @@ class PackagesController extends WP_REST_Controller {
 		}
 
 		return array_values( $releases );
+	}
+
+	/**
+	 * Add cached releases to a package.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param Package $package Package.
+	 * @return Package
+	 */
+	protected function build_package_with_releases( Package $package ): Package {
+		return $this->factory->create( $package->get_type() )
+			->with_package( $package )
+			->add_cached_releases()
+			->build();
 	}
 
 	/**

@@ -41,6 +41,7 @@ class PluginReleasesTest extends TestCase {
 		$package = $this->builder
 			->set_installed( true )
 			->set_installed_version( '1.3.1' )
+			->add_initial_releases()
 			->add_cached_releases()
 			->build();
 
@@ -51,6 +52,7 @@ class PluginReleasesTest extends TestCase {
 		$package = $this->builder
 			->set_installed( true )
 			->set_installed_version( '1.3.1' )
+			->add_initial_releases()
 			->add_cached_releases()
 			->build();
 
