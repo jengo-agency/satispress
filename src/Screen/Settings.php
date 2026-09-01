@@ -72,7 +72,7 @@ class Settings extends AbstractHookProvider {
 		}
 
 		$action = $_GET['satispress_action'];
-		if ( ! in_array( $action, [ 'purge_packages_json', 'purge_packages_cache' ], true ) ) {
+		if ( ! in_array( $action, [ 'purge_packages_json', 'purge_packages_cache', 'purge_releases' ], true ) ) {
 			return;
 		}
 
@@ -96,6 +96,9 @@ class Settings extends AbstractHookProvider {
 			global $wpdb;
 			$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_satispress_hash_%' OR option_name LIKE '_transient_timeout_satispress_hash_%'" );
 			add_settings_error( 'satispress', 'packages_cache_purged', esc_html__( 'Packages cache purged successfully.', 'satispress' ), 'success' );
+		} elseif ( 'purge_releases' === $action ) {
+			do_action( 'satispress_purge_releases', true );
+			add_settings_error( 'satispress', 'releases_purged', esc_html__( 'Old releases purged successfully.', 'satispress' ), 'success' );
 		}
 
 		wp_safe_redirect( remove_query_arg( [ 'satispress_action', '_wpnonce' ] ) );
@@ -396,6 +399,10 @@ class Settings extends AbstractHookProvider {
 	 */
 	public function render_field_enable_purge() {
 		$value = $this->get_setting( 'enable_purge', 'no' );
+		$purge_url = wp_nonce_url(
+			add_query_arg( 'satispress_action', 'purge_releases', menu_page_url( 'satispress', false ) ),
+			'satispress_purge_releases'
+		);
 		?>
 		<p>
 			<label>
@@ -405,6 +412,9 @@ class Settings extends AbstractHookProvider {
 		</p>
 		<p class="description">
 			<?php esc_html_e( 'Keeps only the 3 last versions, 3 last bugfix versions, 3 last minor versions, and 3 major versions.', 'satispress' ); ?>
+		</p>
+		<p>
+			<a href="<?php echo esc_url( $purge_url ); ?>" class="button"><?php esc_html_e( 'Purge Now', 'satispress' ); ?></a>
 		</p>
 		<?php
 	}

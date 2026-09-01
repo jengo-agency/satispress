@@ -53,9 +53,9 @@ class Cron extends AbstractHookProvider {
 	/**
 	 * Purge old releases.
 	 */
-	public function purge_releases() {
+	public function purge_releases( $force = false ) {
 		$options = get_option( 'satispress', [] );
-		if ( empty( $options['enable_purge'] ) || 'yes' !== $options['enable_purge'] ) {
+		if ( ! $force && ( empty( $options['enable_purge'] ) || 'yes' !== $options['enable_purge'] ) ) {
 			return;
 		}
 
